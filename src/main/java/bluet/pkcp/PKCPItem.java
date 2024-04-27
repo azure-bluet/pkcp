@@ -1,6 +1,5 @@
 package bluet.pkcp;
 
-import java.util.Locale;
 import java.util.Optional;
 
 import net.minecraft.core.BlockPos;
@@ -43,15 +42,27 @@ public class PKCPItem extends Item {
         player.setYRot (yr);
         return InteractionResultHolder.success (stack);
     }
+    public static enum LandMode {
+        BOTH, Z_ONLY, X_ONLY;
+        public static LandMode fromint (int x) {
+            switch (x) {
+                case 1: return Z_ONLY;
+                case 2: return X_ONLY;
+                default: return BOTH;
+            }
+        }
+    }
     protected static class MaxObject {
         private double mx;
         private boolean ini;
         private final Player player;
         private final BlockPos base;
-        public MaxObject (Player player, BlockPos pos) {
+        private final LandMode mode;
+        public MaxObject (Player player, BlockPos pos, LandMode mode) {
             ini = false;
             this.player = player;
             this.base = pos;
+            this.mode = mode;
         }
         public void setmax (double d) {
             if (ini) mx = mx > d ? mx : d;
@@ -76,6 +87,7 @@ public class PKCPItem extends Item {
             Vec3 vec = this.player.getDeltaMovement ();
             if (player.getY () - tmp <= .0000001d) return;
             if (player.getY () + vec.y >= tmp) return;
+            if (player.onGround ()) return;
             if (x1 > x2) {
                 tmp = x1; x1 = x2; x2 = tmp;
             }
@@ -94,15 +106,16 @@ public class PKCPItem extends Item {
                 rz = Math.min (0, rz);
                 this.setmax (-Math.sqrt (rx * rx + rz * rz));
             } else {
-                if (Math.max (rx, rz) > .3d) this.setmax (Math.min (rx, rz));
+                if (mode == LandMode.X_ONLY) this.setmax (rx);
+                else if (mode == LandMode.Z_ONLY) this.setmax (rz);
                 else this.setmax (Math.sqrt (rx * rx + rz * rz));
             }
         }
     }
-    public static Optional <Double> calc_dist (Level level, BlockPos pos, Player player) {;
+    public static Optional <Double> calc_dist (Level level, BlockPos pos, Player player, LandMode mode) {
         BlockState state = level.getBlockState (pos);
         VoxelShape shape = state.getCollisionShape (level, pos);
-        MaxObject obj = new MaxObject (player, pos);
+        MaxObject obj = new MaxObject (player, pos, mode);
         shape.forAllBoxes (obj::consume);
         if (obj.init () == false) return Optional.empty ();
         else return Optional.of (obj.getmax ());
@@ -114,16 +127,19 @@ public class PKCPItem extends Item {
             int x, y, z;
             CompoundTag tag = stack.getTag ();
             if (tag == null) return;
+            LandMode mode = LandMode.fromint (tag.getInt ("mode"));
             tag = tag.getCompound ("block");
             x = tag.getInt ("x");
             y = tag.getInt ("y");
             z = tag.getInt ("z");
             BlockPos pos = new BlockPos (x, y, z);
-            Optional <Double> d = calc_dist (level, pos, player);
+            Optional <Double> d = calc_dist (level, pos, player, mode);
             if (d.isPresent ()) {
                 double dist = d.get ();
                 if (dist < -1) return;
-                player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format (Locale.ROOT, "%.6f", dist)), true);
+                boolean landed = dist >= 0d;
+                player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
+                if (landed) player.sendSystemMessage (Component.literal ("+" + String.format ("%.8f", dist)) .withColor (0x0000ff00));
             }
         }
     }
@@ -131,4 +147,5 @@ public class PKCPItem extends Item {
     public static final RegistryObject <Item> pkcp = registry.register ("pkcp", PKCPItem::new);
     public static final RegistryObject <Item> pksetlb = registry.register ("pksetlb", PKSetLB::new);
     public static final RegistryObject <Item> pksetreturn = registry.register ("pksetreturn", PKSetReturn::new);
+    public static final RegistryObject <Item> pksetmode = registry.register ("pksetmode", PKSetMode::new);
 }

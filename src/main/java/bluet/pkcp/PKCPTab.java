@@ -19,6 +19,7 @@ public class PKCPTab {
                 t.accept (PKCPItem.pkcp.get ());
                 t.accept (PKCPItem.pksetlb.get ());
                 t.accept (PKCPItem.pksetreturn.get ());
+                t.accept (PKCPItem.pksetmode.get ());
             }
         )
         .build ()

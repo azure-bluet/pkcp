@@ -2,6 +2,13 @@
     "item.pkcp.pkcp": "OJ Checkpoint",
     "item.pkcp.pksetlb": "OJ Set Landing",
     "item.pkcp.pksetreturn": "OJ Set Return",
+    "item.pkcp.pksetmode": "OJ Set Landing Mode",
     "tab.pkcp.pkcp_tab": "OJ Checkpoint",
-    "pkcp.msg.offset": "Offset: "
+    "pkcp.msg.offset": "Offset: ",
+    "pkcp.msg.success_setlb": "Successfully set landing block",
+    "pkcp.msg.success_setreturn": "Successfully set return point",
+    "pkcp.msg.lbmode": "Current landing mode is: ",
+    "pkcp.mode.x": "X only",
+    "pkcp.mode.z": "Z only",
+    "pkcp.mode.both": "Both X and Z"
 }

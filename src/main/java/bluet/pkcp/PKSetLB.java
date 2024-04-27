@@ -2,6 +2,7 @@ package bluet.pkcp;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -24,6 +25,7 @@ public class PKSetLB extends Item {
         ItemStack off = player.getOffhandItem ();
         if (! off.is (PKCPItem.pkcp.get ())) return InteractionResult.FAIL;
         off.getOrCreateTag () .put ("block", tag);
+        player.displayClientMessage (Component.translatable ("pkcp.msg.success_setlb"), true);
         return InteractionResult.SUCCESS;
     }
 }

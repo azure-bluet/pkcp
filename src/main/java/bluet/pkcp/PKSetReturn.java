@@ -1,6 +1,7 @@
 package bluet.pkcp;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -24,6 +25,7 @@ public class PKSetReturn extends Item {
         tag.putFloat ("xrot", player.getXRot ());
         tag.putFloat ("yrot", player.getYRot ());
         off.getOrCreateTag () .put ("pos", tag);
+        player.displayClientMessage (Component.translatable ("pkcp.msg.success_setreturn"), true);
         return InteractionResultHolder.success (stack);
     }
 }

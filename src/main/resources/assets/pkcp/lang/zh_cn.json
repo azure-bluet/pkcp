@@ -2,5 +2,12 @@
     "item.pkcp.pkcp": "单点存档点",
     "item.pkcp.pksetlb": "设置单点落地方块",
     "item.pkcp.pksetreturn": "设置单点存档点",
-    "tab.pkcp.pkcp_tab": "单点存档"
+    "item.pkcp.pksetmode": "设置单点落地模式",
+    "tab.pkcp.pkcp_tab": "单点存档",
+    "pkcp.msg.success_setlb": "成功设置落地方块",
+    "pkcp.msg.success_setreturn": "成功设置返回点",
+    "pkcp.msg.lbmode": "当前落地模式为：",
+    "pkcp.mode.x": "仅X",
+    "pkcp.mode.z": "仅Z",
+    "pkcp.mode.both": "X和Z同时"
 }
