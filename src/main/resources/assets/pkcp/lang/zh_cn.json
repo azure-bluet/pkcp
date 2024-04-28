@@ -7,6 +7,7 @@
     "pkcp.msg.success_setlb": "成功设置落地方块",
     "pkcp.msg.success_setreturn": "成功设置返回点",
     "pkcp.msg.lbmode": "当前落地模式为：",
+    "pkcp.msg.click_copy": "点击此处复制物品信息！",
     "pkcp.mode.x": "仅X",
     "pkcp.mode.z": "仅Z",
     "pkcp.mode.both": "X和Z同时"

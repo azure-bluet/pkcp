@@ -2,6 +2,9 @@ package bluet.pkcp;
 
 import java.util.Optional;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -29,6 +32,21 @@ public class PKCPItem extends Item {
         ItemStack stack = player.getItemInHand (hand);
         CompoundTag tag = stack.getTag ();
         if (tag == null) return InteractionResultHolder.fail (stack);
+        // Shift copying
+        if (player.isCrouching ()) {
+            JsonObject obj = new JsonObject ();
+            obj.add ("type", new JsonPrimitive ("translatable"));
+            obj.add ("translate", new JsonPrimitive ("pkcp.msg.click_copy"));
+            obj.add ("color", new JsonPrimitive ("#22ff22"));
+            obj.add ("underlined", new JsonPrimitive (true));
+            JsonObject click = new JsonObject ();
+            click.add ("action", new JsonPrimitive ("copy_to_clipboard"));
+            String item = ForgeRegistries.ITEMS.getKey (this) .toString ();
+            click.add ("value", new JsonPrimitive (item + tag.toString ()));
+            obj.add ("clickEvent", click);
+            player.sendSystemMessage (Component.Serializer.fromJson (obj));
+            return InteractionResultHolder.success (stack);
+        }
         tag = tag.getCompound ("pos");
         double x, y, z;
         x = tag.getDouble ("x");

@@ -4,6 +4,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
@@ -20,6 +21,10 @@ public class PKCPTab {
                 t.accept (PKCPItem.pksetlb.get ());
                 t.accept (PKCPItem.pksetreturn.get ());
                 t.accept (PKCPItem.pksetmode.get ());
+
+                ItemStack head = new ItemStack (Items.PLAYER_HEAD);
+                head.getOrCreateTag () .putString ("SkullOwner", "azure__bluet");
+                t.accept (head);
             }
         )
         .build ()

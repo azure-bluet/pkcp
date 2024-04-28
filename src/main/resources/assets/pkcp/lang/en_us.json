@@ -8,6 +8,7 @@
     "pkcp.msg.success_setlb": "Successfully set landing block",
     "pkcp.msg.success_setreturn": "Successfully set return point",
     "pkcp.msg.lbmode": "Current landing mode is: ",
+    "pkcp.msg.click_copy": "Click here to copy item info!",
     "pkcp.mode.x": "X only",
     "pkcp.mode.z": "Z only",
     "pkcp.mode.both": "Both X and Z"
