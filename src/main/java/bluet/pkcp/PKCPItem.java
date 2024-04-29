@@ -28,6 +28,7 @@ public class PKCPItem extends Item {
     }
     @Override
     public InteractionResultHolder <ItemStack> use (Level level, Player player, InteractionHand hand) {
+        if (level.isClientSide ()) return super.use (level, player, hand);
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.fail (player.getItemInHand (hand));
         ItemStack stack = player.getItemInHand (hand);
         CompoundTag tag = stack.getTag ();
@@ -140,6 +141,7 @@ public class PKCPItem extends Item {
     }
     @Override
     public void inventoryTick (ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        if (level.isClientSide ()) return;
         if (! selected) return;
         if (entity instanceof Player player) {
             int x, y, z;
