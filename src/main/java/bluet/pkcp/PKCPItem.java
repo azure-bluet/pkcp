@@ -28,13 +28,14 @@ public class PKCPItem extends Item {
     }
     @Override
     public InteractionResultHolder <ItemStack> use (Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide ()) return super.use (level, player, hand);
+        // if (level.isClientSide ()) return super.use (level, player, hand);
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.fail (player.getItemInHand (hand));
         ItemStack stack = player.getItemInHand (hand);
         CompoundTag tag = stack.getTag ();
         if (tag == null) return InteractionResultHolder.fail (stack);
         // Shift copying
         if (player.isCrouching ()) {
+            if (! level.isClientSide ()) return super.use (level, player, hand);
             JsonObject obj = new JsonObject ();
             obj.add ("type", new JsonPrimitive ("translatable"));
             obj.add ("translate", new JsonPrimitive ("pkcp.msg.click_copy"));
@@ -56,9 +57,10 @@ public class PKCPItem extends Item {
         float xr, yr;
         xr = tag.getFloat ("xrot");
         yr = tag.getFloat ("yrot");
-        player.teleportTo (x, y, z);
-        player.setXRot (xr);
-        player.setYRot (yr);
+        if (level.isClientSide ()) {
+            player.setXRot (xr);
+            player.setYRot (yr);
+        } else player.teleportTo (x, y, z);
         return InteractionResultHolder.success (stack);
     }
     public static enum LandMode {
