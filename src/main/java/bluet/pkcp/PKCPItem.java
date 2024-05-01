@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import bluet.pkcp.macro.MacroItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -170,4 +171,5 @@ public class PKCPItem extends Item {
     public static final RegistryObject <Item> pksetlb = registry.register ("pksetlb", PKSetLB::new);
     public static final RegistryObject <Item> pksetreturn = registry.register ("pksetreturn", PKSetReturn::new);
     public static final RegistryObject <Item> pksetmode = registry.register ("pksetmode", PKSetMode::new);
+    public static final RegistryObject <Item> pkmacro = registry.register ("pkmacro", MacroItem::new);
 }

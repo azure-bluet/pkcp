@@ -21,6 +21,7 @@ public class PKCPTab {
                 t.accept (PKCPItem.pksetlb.get ());
                 t.accept (PKCPItem.pksetreturn.get ());
                 t.accept (PKCPItem.pksetmode.get ());
+                t.accept (PKCPItem.pkmacro.get ());
 
                 ItemStack head = new ItemStack (Items.PLAYER_HEAD);
                 head.getOrCreateTag () .putString ("SkullOwner", "azure__bluet");
