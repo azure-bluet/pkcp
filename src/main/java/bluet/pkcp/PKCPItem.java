@@ -162,7 +162,7 @@ public class PKCPItem extends Item {
                 if (dist < -1) return;
                 boolean landed = dist >= 0d;
                 player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
-                if (landed) player.sendSystemMessage (Component.literal ("+" + String.format ("%.8f", dist)) .withColor (0x0000ff00));
+                if (landed || MacroItem.instance.running ()) player.sendSystemMessage (Component.literal ((landed ? "+" : "") + String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000));
             }
         }
     }
