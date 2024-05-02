@@ -17,7 +17,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -74,17 +73,26 @@ public class PKCPItem extends Item {
             }
         }
     }
+    private double lx, ly, lz;
+    private boolean last = false, ground = false;
+    private long lasttick;
     protected static class MaxObject {
         private double mx;
         private boolean ini;
         private final Player player;
         private final BlockPos base;
         private final LandMode mode;
-        public MaxObject (Player player, BlockPos pos, LandMode mode) {
+        private final double lx, ly, lz;
+        private final boolean ground;
+        public MaxObject (Player player, BlockPos pos, LandMode mode, double lx, double ly, double lz, boolean ground) {
             ini = false;
             this.player = player;
             this.base = pos;
             this.mode = mode;
+            this.lx = lx;
+            this.ly = ly;
+            this.lz = lz;
+            this.ground = ground;
         }
         public void setmax (double d) {
             if (ini) mx = mx > d ? mx : d;
@@ -101,28 +109,33 @@ public class PKCPItem extends Item {
         }
         public void consume (double x1, double y1, double z1, double x2, double y2, double z2) {
             int xb = this.base.getX ();
+            int yb = this.base.getY ();
             int zb = this.base.getZ ();
             x1 += xb; x2 += xb;
+            y1 += yb; y2 += yb;
             z1 += zb; z2 += zb;
             double tmp;
-            tmp = Math.max (y1, y2) + this.base.getY ();
-            Vec3 vec = this.player.getDeltaMovement ();
-            if (player.getY () - tmp <= .0000001d) return;
-            if (player.getY () + vec.y >= tmp) return;
-            if (player.onGround ()) return;
+            // Player on the block or player lower than the block
+            boolean flag;
+            if (player.onGround ()) {
+                var dy = Math.abs (player.getY () - Math.max (y1, y2));
+                flag = dy <= 0.000001d;
+                flag = flag && !this.ground;
+            } else {
+                flag = player.getY () < Math.max (y1, y2) && this.ly >= Math.max (y1, y2);
+            }
+            if (!flag) return;
             if (x1 > x2) {
                 tmp = x1; x1 = x2; x2 = tmp;
             }
             if (z1 > z2) {
                 tmp = z1; z1 = z2; z2 = tmp;
             }
-            double px = player.getX ();
-            double pz = player.getZ ();
             double mx = (x1 + x2) / 2;
             double mz = (z1 + z2) / 2;
             double rx, rz;
-            rx = (.3d + x2 - mx) - Math.abs (px - mx);
-            rz = (.3d + z2 - mz) - Math.abs (pz - mz);
+            rx = (.3d + x2 - mx) - Math.abs (lx - mx);
+            rz = (.3d + z2 - mz) - Math.abs (lz - mz);
             if (rx < 0 || rz < 0) {
                 rx = Math.min (0, rx);
                 rz = Math.min (0, rz);
@@ -134,36 +147,52 @@ public class PKCPItem extends Item {
             }
         }
     }
-    public static Optional <Double> calc_dist (Level level, BlockPos pos, Player player, LandMode mode) {
+    public Optional <Double> calc_dist (Level level, BlockPos pos, Player player, LandMode mode) {
         BlockState state = level.getBlockState (pos);
         VoxelShape shape = state.getCollisionShape (level, pos);
-        MaxObject obj = new MaxObject (player, pos, mode);
+        MaxObject obj = new MaxObject (player, pos, mode, this.lx, this.ly, this.lz, this.ground);
         shape.forAllBoxes (obj::consume);
         if (obj.init () == false) return Optional.empty ();
         else return Optional.of (obj.getmax ());
     }
     @Override
     public void inventoryTick (ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide ()) return;
-        if (! selected) return;
-        if (entity instanceof Player player) {
-            int x, y, z;
-            CompoundTag tag = stack.getTag ();
-            if (tag == null) return;
-            LandMode mode = LandMode.fromint (tag.getInt ("mode"));
-            tag = tag.getCompound ("block");
-            x = tag.getInt ("x");
-            y = tag.getInt ("y");
-            z = tag.getInt ("z");
-            BlockPos pos = new BlockPos (x, y, z);
-            Optional <Double> d = calc_dist (level, pos, player, mode);
-            if (d.isPresent ()) {
-                double dist = d.get ();
-                if (dist < -1) return;
-                boolean landed = dist >= 0d;
-                player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
-                if (landed || MacroItem.instance.running ()) player.sendSystemMessage (Component.literal ((landed ? "+" : "") + String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000));
+        if (entity instanceof Player player && level.isClientSide ()) {
+            if (! this.last) {
+                this.last = true;
+                this.lx = player.getX ();
+                this.ly = player.getY ();
+                this.lz = player.getZ ();
+                this.lasttick = level.getGameTime ();
+                this.ground = player.onGround ();
+                return;
             }
+            if (selected) tick (stack, level, player);
+            this.lx = player.getX ();
+            this.ly = player.getY ();
+            this.lz = player.getZ ();
+            this.lasttick = level.getGameTime ();
+            this.ground = player.onGround ();
+        }
+    }
+    public void tick (ItemStack stack, Level level, Player player) {
+        if (this.lasttick + 1 != level.getGameTime ()) return;
+        int x, y, z;
+        CompoundTag tag = stack.getTag ();
+        if (tag == null) return;
+        LandMode mode = LandMode.fromint (tag.getInt ("mode"));
+        tag = tag.getCompound ("block");
+        x = tag.getInt ("x");
+        y = tag.getInt ("y");
+        z = tag.getInt ("z");
+        BlockPos pos = new BlockPos (x, y, z);
+        Optional <Double> d = calc_dist (level, pos, player, mode);
+        if (d.isPresent ()) {
+            double dist = d.get ();
+            if (dist < -1) return;
+            boolean landed = dist >= 0d;
+            player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
+            if (landed || MacroItem.instance.running ()) player.sendSystemMessage (Component.literal ((landed ? "+" : "") + String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000));
         }
     }
     public static final DeferredRegister <Item> registry = DeferredRegister.create (ForgeRegistries.ITEMS, PKCP.MOD_ID);
