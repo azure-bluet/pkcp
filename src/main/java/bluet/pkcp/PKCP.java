@@ -11,5 +11,6 @@ public class PKCP {
         IEventBus bus = FMLJavaModLoadingContext.get () .getModEventBus ();
         PKCPItem.registry.register (bus);
         PKCPTab.registry.register (bus);
+        PKCPComponent.registry.register (bus);
     }
 }

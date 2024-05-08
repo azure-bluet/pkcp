@@ -1,5 +1,6 @@
 package bluet.pkcp.macro;
 
+import bluet.pkcp.PKCPComponent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -23,10 +24,12 @@ public class MacroItem extends Item {
     public InteractionResultHolder <ItemStack> use (Level level, Player pl, InteractionHand hand) {
         if (pl instanceof LocalPlayer player) {
             ItemStack stack = player.getItemInHand (hand);
-            var tag = stack.getTag ();
-            if (tag == null) return InteractionResultHolder.fail (stack);
-            String str = tag.getString ("macro");
-            this.macros = new Macros (str);
+            MacroComponent com = stack.get (PKCPComponent.macro.get ());
+            if (com == null) return InteractionResultHolder.fail (stack);
+            String str = com.macro ();
+            Macros m = new Macros (str);
+            if (m.cmds.isEmpty ()) return InteractionResultHolder.fail (stack);
+            this.macros = m;
             this.last_stack = stack;
             return InteractionResultHolder.success (stack);
         } else return InteractionResultHolder.pass (pl.getItemInHand (hand));

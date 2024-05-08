@@ -34,4 +34,5 @@ build
 .gradle
 *.launch
 *.zip
+*.out
 

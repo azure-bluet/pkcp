@@ -1,6 +1,5 @@
 package bluet.pkcp;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -15,25 +14,14 @@ public class PKSetMode extends Item {
     }
     @Override
     public InteractionResultHolder <ItemStack> use (Level level, Player player, InteractionHand hand) {
+        if (hand == InteractionHand.OFF_HAND) return InteractionResultHolder.pass (player.getItemInHand (hand));
+        if (level.isClientSide) return InteractionResultHolder.pass (player.getItemInHand (hand));
         ItemStack off = player.getOffhandItem (), stack = player.getItemInHand (hand);
         if (! off.is (PKCPItem.pkcp.get ())) return InteractionResultHolder.fail (stack);
-        CompoundTag tag = off.getOrCreateTag ();
-        int previous = tag.getInt ("mode");
-        previous ++;
-        previous %= 3;
-        tag.putInt ("mode", previous);
-        String trans = "pkcp.mode.";
-        switch (previous) {
-            case 1:
-            trans += "z";
-            break;
-            case 2:
-            trans += "x";
-            break;
-            default:
-            trans += "both";
-            break;
-        }
+        PKCPComponent com = off.get (PKCPComponent.pkcp.get ());
+        if (com == null) return InteractionResultHolder.fail (stack);
+        com.setmode (com.mode () .next ());
+        String trans = com.mode () .trans ();
         player.displayClientMessage (Component.translatable ("pkcp.msg.lbmode") .append (Component.translatable (trans)), true);
         return InteractionResultHolder.success (stack);
     }

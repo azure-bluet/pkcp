@@ -2,13 +2,14 @@ package bluet.pkcp;
 
 import java.util.Optional;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-
 import bluet.pkcp.macro.MacroItem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -26,52 +27,42 @@ public class PKCPItem extends Item {
     public PKCPItem () {
         super (new Item.Properties () .stacksTo (1) .fireResistant ());
     }
+    public static void shift_send (LocalPlayer player, ItemStack stack) {
+        PKCPComponent component = stack.get (PKCPComponent.pkcp.get ());
+        String item = ForgeRegistries.ITEMS.getKey (stack.getItem ()) .toString ();
+        if (component != null) {
+            // Landing Block
+            BlockPos lb = component.landing ();
+            item += String.format ("[pkcp:pkcp={landing:[I;%d,%d,%d],", lb.getX (), lb.getY (), lb.getZ ());
+            // Return point
+            item += String.format ("x:%.8fd,y:%.8fd,z:%.8fd,", component.retx (), component.rety (), component.retz ());
+            item += String.format ("xr:%.8ff,yr:%.8ff,", component.rotx (), component.roty ());
+            // Landing mode
+            item += String.format ("mode:{landmode:%d}}]", component.mode () .toint ());
+        }
+        ClickEvent event = new ClickEvent (ClickEvent.Action.COPY_TO_CLIPBOARD, item);
+        Style style = Style.EMPTY.withColor (0x22ff22) .withClickEvent (event);
+        Component msg = Component.translatable ("pkcp.msg.click_copy") .withStyle (style);
+        player.sendSystemMessage (msg);
+    }
     @Override
     public InteractionResultHolder <ItemStack> use (Level level, Player player, InteractionHand hand) {
         // if (level.isClientSide ()) return super.use (level, player, hand);
         if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.fail (player.getItemInHand (hand));
         ItemStack stack = player.getItemInHand (hand);
-        CompoundTag tag = stack.getTag ();
-        if (tag == null) return InteractionResultHolder.fail (stack);
+        PKCPComponent com = stack.get (PKCPComponent.pkcp.get ());
+        if (com == null) return InteractionResultHolder.fail (stack);
         // Shift copying
-        if (player.isCrouching ()) {
-            if (! level.isClientSide ()) return super.use (level, player, hand);
-            JsonObject obj = new JsonObject ();
-            obj.add ("type", new JsonPrimitive ("translatable"));
-            obj.add ("translate", new JsonPrimitive ("pkcp.msg.click_copy"));
-            obj.add ("color", new JsonPrimitive ("#22ff22"));
-            obj.add ("underlined", new JsonPrimitive (true));
-            JsonObject click = new JsonObject ();
-            click.add ("action", new JsonPrimitive ("copy_to_clipboard"));
-            String item = ForgeRegistries.ITEMS.getKey (this) .toString ();
-            click.add ("value", new JsonPrimitive (item + tag.toString ()));
-            obj.add ("clickEvent", click);
-            player.sendSystemMessage (Component.Serializer.fromJson (obj));
-            return InteractionResultHolder.success (stack);
-        }
-        tag = tag.getCompound ("pos");
-        double x, y, z;
-        x = tag.getDouble ("x");
-        y = tag.getDouble ("y");
-        z = tag.getDouble ("z");
-        float xr, yr;
-        xr = tag.getFloat ("xrot");
-        yr = tag.getFloat ("yrot");
-        if (level.isClientSide ()) {
-            player.setXRot (xr);
-            player.setYRot (yr);
-        } else player.teleportTo (x, y, z);
-        return InteractionResultHolder.success (stack);
-    }
-    public static enum LandMode {
-        BOTH, Z_ONLY, X_ONLY;
-        public static LandMode fromint (int x) {
-            switch (x) {
-                case 1: return Z_ONLY;
-                case 2: return X_ONLY;
-                default: return BOTH;
+        if (player instanceof LocalPlayer pl) {
+            Minecraft mc = Minecraft.getInstance ();
+            Options opt = mc.options;
+            if (opt.keyShift.isDown ()) {
+                shift_send (pl, stack);
+                return InteractionResultHolder.success (stack);
             }
         }
+        com.returning (player);
+        return InteractionResultHolder.success (stack);
     }
     private double lx, ly, lz;
     private boolean last = false, ground = false;
@@ -81,10 +72,10 @@ public class PKCPItem extends Item {
         private boolean ini;
         private final Player player;
         private final BlockPos base;
-        private final LandMode mode;
+        private final PKCPLandMode mode;
         private final double lx, ly, lz;
         private final boolean ground;
-        public MaxObject (Player player, BlockPos pos, LandMode mode, double lx, double ly, double lz, boolean ground) {
+        public MaxObject (Player player, BlockPos pos, PKCPLandMode mode, double lx, double ly, double lz, boolean ground) {
             ini = false;
             this.player = player;
             this.base = pos;
@@ -141,13 +132,13 @@ public class PKCPItem extends Item {
                 rz = Math.min (0, rz);
                 this.setmax (-Math.sqrt (rx * rx + rz * rz));
             } else {
-                if (mode == LandMode.X_ONLY) this.setmax (rx);
-                else if (mode == LandMode.Z_ONLY) this.setmax (rz);
+                if (mode == PKCPLandMode.X_ONLY) this.setmax (rx);
+                else if (mode == PKCPLandMode.Z_ONLY) this.setmax (rz);
                 else this.setmax (Math.sqrt (rx * rx + rz * rz));
             }
         }
     }
-    public Optional <Double> calc_dist (Level level, BlockPos pos, Player player, LandMode mode) {
+    public Optional <Double> calc_dist (Level level, BlockPos pos, Player player, PKCPLandMode mode) {
         BlockState state = level.getBlockState (pos);
         VoxelShape shape = state.getCollisionShape (level, pos);
         MaxObject obj = new MaxObject (player, pos, mode, this.lx, this.ly, this.lz, this.ground);
@@ -158,16 +149,9 @@ public class PKCPItem extends Item {
     @Override
     public void inventoryTick (ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (entity instanceof Player player && level.isClientSide ()) {
-            if (! this.last) {
-                this.last = true;
-                this.lx = player.getX ();
-                this.ly = player.getY ();
-                this.lz = player.getZ ();
-                this.lasttick = level.getGameTime ();
-                this.ground = player.onGround ();
-                return;
-            }
-            if (selected) tick (stack, level, player);
+            if (!selected) return;
+            tick (stack, level, player);
+            this.last = true;
             this.lx = player.getX ();
             this.ly = player.getY ();
             this.lz = player.getZ ();
@@ -176,16 +160,12 @@ public class PKCPItem extends Item {
         }
     }
     public void tick (ItemStack stack, Level level, Player player) {
+        if (! this.last) return;
         if (this.lasttick + 1 != level.getGameTime ()) return;
-        int x, y, z;
-        CompoundTag tag = stack.getTag ();
-        if (tag == null) return;
-        LandMode mode = LandMode.fromint (tag.getInt ("mode"));
-        tag = tag.getCompound ("block");
-        x = tag.getInt ("x");
-        y = tag.getInt ("y");
-        z = tag.getInt ("z");
-        BlockPos pos = new BlockPos (x, y, z);
+        PKCPComponent component = stack.get (PKCPComponent.pkcp.get ());
+        if (component == null) return;
+        PKCPLandMode mode = component.mode ();
+        BlockPos pos = component.landing ();
         Optional <Double> d = calc_dist (level, pos, player, mode);
         if (d.isPresent ()) {
             double dist = d.get ();
