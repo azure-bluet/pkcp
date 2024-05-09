@@ -4,8 +4,8 @@ import re
 
 def macro (cmd):
     # item replace entity @p container.4 with pkcp:pkmacro{"macro":"..."} ->
-    # item replace entity @p container.4 with pkcp:macro[pkcp:pkmacro={"macro":"..."}]
-    return cmd [:52] + '[pkcp:pkmacro=' + cmd [52:] + ']'
+    # item replace entity @p container.4 with pkcp:macro[pkcp:macro={"macro":"..."}]
+    return cmd [:52] + '[pkcp:macro=' + cmd [52:] + ']'
 
 def pkcp (cmd):
     nbt = cmd [49:-1]
