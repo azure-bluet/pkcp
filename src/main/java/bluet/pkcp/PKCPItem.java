@@ -3,6 +3,7 @@ package bluet.pkcp;
 import java.util.Optional;
 
 import bluet.pkcp.macro.MacroItem;
+import bluet.pkcp.macro.Macros;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.player.LocalPlayer;
@@ -12,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,8 +24,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 public class PKCPItem extends Item {
+    public static PKCPItem INSTANCE;
     public PKCPItem () {
         super (new Item.Properties () .stacksTo (1) .fireResistant ());
+        INSTANCE = this;
     }
     public static void shift_send (LocalPlayer player, ItemStack stack) {
         PKCPComponent component = stack.get (PKCPComponent.pkcp.get ());
@@ -138,42 +140,38 @@ public class PKCPItem extends Item {
             }
         }
     }
-    public Optional <Double> calc_dist (Level level, BlockPos pos, Player player, PKCPLandMode mode) {
+    public static Optional <Double> calc_dist (Level level, BlockPos pos, Player player, PKCPLandMode mode) {
         BlockState state = level.getBlockState (pos);
         VoxelShape shape = state.getCollisionShape (level, pos);
-        MaxObject obj = new MaxObject (player, pos, mode, this.lx, this.ly, this.lz, this.ground);
+        MaxObject obj = new MaxObject (player, pos, mode, INSTANCE.lx, INSTANCE.ly, INSTANCE.lz, INSTANCE.ground);
         shape.forAllBoxes (obj::consume);
         if (obj.init () == false) return Optional.empty ();
         else return Optional.of (obj.getmax ());
     }
-    @Override
-    public void inventoryTick (ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (entity instanceof Player player && level.isClientSide ()) {
-            if (!selected) return;
-            tick (stack, level, player);
-            this.last = true;
-            this.lx = player.getX ();
-            this.ly = player.getY ();
-            this.lz = player.getZ ();
-            this.lasttick = level.getGameTime ();
-            this.ground = player.onGround ();
+    public static void tick (Level level, Player player, ItemStack stack) {
+        BlockPos pos = PKCPComponent.shared_pos;
+        PKCPLandMode lm = PKCPComponent.shared_mode;
+        if (stack.getItem () instanceof PKCPItem && stack.has (PKCPComponent.pkcp.get ())) {
+            PKCPComponent component = stack.get (PKCPComponent.pkcp.get ());
+            pos = component.landing ();
+            lm = component.mode ();
         }
-    }
-    public void tick (ItemStack stack, Level level, Player player) {
-        if (! this.last) return;
-        if (this.lasttick + 1 != level.getGameTime ()) return;
-        PKCPComponent component = stack.get (PKCPComponent.pkcp.get ());
-        if (component == null) return;
-        PKCPLandMode mode = component.mode ();
-        BlockPos pos = component.landing ();
-        Optional <Double> d = calc_dist (level, pos, player, mode);
-        if (d.isPresent ()) {
-            double dist = d.get ();
-            if (dist < -1) return;
-            boolean landed = dist >= 0d;
-            player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
-            if (landed || MacroItem.instance.running ()) player.sendSystemMessage (Component.literal ((landed ? "+" : "") + String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000));
+        if (INSTANCE.last && pos != null) {
+            Optional <Double> d = calc_dist (level, pos, player, lm);
+            if (d.isPresent ()) {
+                double dist = d.get ();
+                if (dist >= -1) {
+                    boolean landed = dist >= 0d;
+                    player.displayClientMessage (Component.translatable ("pkcp.msg.offset") .append (String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000), true);
+                    if (landed || Macros.executing) player.sendSystemMessage (Component.literal ((landed ? "+" : "") + String.format ("%.8f", dist)) .withColor (landed ? 0x0000ff00 : 0x00ff0000));
+                }
+            }
         }
+        INSTANCE.last = true;
+        INSTANCE.lx = player.getX ();
+        INSTANCE.ly = player.getY ();
+        INSTANCE.lz = player.getZ ();
+        INSTANCE.ground = player.onGround ();
     }
     public static final DeferredRegister <Item> registry = DeferredRegister.create (ForgeRegistries.ITEMS, PKCP.MOD_ID);
     public static final RegistryObject <Item> pkcp = registry.register ("pkcp", PKCPItem::new);

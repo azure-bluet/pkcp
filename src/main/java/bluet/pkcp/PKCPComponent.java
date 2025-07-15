@@ -85,4 +85,6 @@ public class PKCPComponent {
     }
     public static final RegistryObject <DataComponentType <PKCPComponent>> pkcp = registry.register ("pkcp", reg (CODEC));
     public static final RegistryObject <DataComponentType <MacroComponent>> macro = registry.register ("macro", reg (MacroComponent.CODEC));
+    public static BlockPos shared_pos = null;
+    public static PKCPLandMode shared_mode = PKCPLandMode.BOTH;
 }

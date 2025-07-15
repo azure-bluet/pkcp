@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "bluet.pkcp.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "client": [ "macro.MacroExecutionMixin" ],
+  "injectors": { "defaultRequire": 1 }
+}

@@ -14,5 +14,13 @@
     "pkcp.msg.macro_end": "Macro completed",
     "pkcp.mode.x": "X only",
     "pkcp.mode.z": "Z only",
-    "pkcp.mode.both": "Both X and Z"
+    "pkcp.mode.both": "Both X and Z",
+    "pkcp.key.runmacro": "Run Macro",
+    "pkcp.cmd.yesset": "Successfully set macro",
+    "pkcp.cmd.noset": "Failed parsing macro",
+    "pkcp.cmd.list": "Following macro *files* exist:",
+    "pkcp.cmd.yesload": "Loaded macro",
+    "pkcp.cmd.noload": "Failed loading macro",
+    "pkcp.cmd.yessave": "Successfully saved macro",
+    "pkcp.cmd.nosave": "Failed saving macro"
 }

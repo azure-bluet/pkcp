@@ -8,19 +8,19 @@ import javax.annotation.Nullable;
 
 import bluet.pkcp.macro.PlayerMacro.TickMacro;
 
-public class PKCPMacroRegistry implements Function <String, MacroCommand> {
+public class PKCPMacroRegistry implements Function <String, MacroEntry> {
     public static final PKCPMacroRegistry instance;
-    private final Map <String, Function <String, MacroCommand>> map = new HashMap <> ();
+    private final Map <String, Function <String, MacroEntry>> map = new HashMap <> ();
     @Nullable
-    public MacroCommand apply (String macro) {
+    public MacroEntry apply (String macro) {
         macro = macro.strip ();
         String cl = macro.split (" ", 2) [0];
         var fun = this.map.get (cl);
         if (fun == null) return new SimpleMacro ("~ " + macro);
-        MacroCommand cmd = fun.apply (macro);
+        MacroEntry cmd = fun.apply (macro);
         return cmd;
     }
-    public void register (String name, Function <String, MacroCommand> function) {
+    public void register (String name, Function <String, MacroEntry> function) {
         this.map.put (name, function);
     }
     public static float ofloat (String s) {
@@ -37,40 +37,43 @@ public class PKCPMacroRegistry implements Function <String, MacroCommand> {
             return 0;
         }
     }
-    public static class SimpleMacro implements MacroCommand {
+    public static class SimpleMacro implements MacroEntry {
         public final float yaw, pitch;
         public final String keys;
+        public final int len;
         public SimpleMacro (String cmd) {
-            String [] ss = cmd.split (" ", 4);
-            String [] tmp = ss; ss = new String [4];
+            String [] ss = cmd.split (" ", 5);
+            String [] tmp = ss; ss = new String [5];
             int i;
             for (i=0; i<tmp.length; i++) ss [i] = tmp [i];
+            if (tmp.length < 5) ss [4] = "1";
             if (tmp.length < 4) ss [3] = "";
             if (tmp.length < 3) ss [2] = "";
             if (tmp.length < 2) ss [1] = "";
             this.keys = ss [1];
             this.yaw = ofloat (ss [2]);
             this.pitch = ofloat (ss [3]);
+            this.len = oint (ss [4]);
         }
         public int length () {
-            return 1;
+            return this.len;
         }
         public TickMacro perform (int tick) {
             return new TickMacro (
-                this.keys.indexOf ("W") != -1,
-                this.keys.indexOf ("A") != -1,
-                this.keys.indexOf ("S") != -1,
-                this.keys.indexOf ("D") != -1,
-                this.keys.indexOf ("J") != -1,
-                this.keys.indexOf ("C") != -1,
-                this.keys.indexOf ("s") != -1,
-                this.keys.indexOf ("L") != -1,
-                this.keys.indexOf ("R") != -1,
+                this.keys.contains("W"),
+                this.keys.contains("A"),
+                this.keys.contains("S"),
+                this.keys.contains("D"),
+                this.keys.contains("J"),
+                this.keys.contains("C"),
+                this.keys.contains("s"),
+                this.keys.contains("L"),
+                this.keys.contains("R"),
                 this.yaw, this.pitch
             );
         }
     }
-    public static class Jam implements MacroCommand {
+    public static class Jam implements MacroEntry {
         public final int tier;
         public final TickMacro j, aj, air;
         public int length () {
@@ -90,6 +93,36 @@ public class PKCPMacroRegistry implements Function <String, MacroCommand> {
             else this.tier = oint (ms [1]);
         }
     }
+    public static class E implements MacroEntry {
+        public final int len;
+        public final boolean display;
+        public E (String cmd) {
+            var s = cmd.split (" ", 3);
+            if (s.length == 1) {
+                this.len = 1;
+                this.display = false;
+            }
+            else if (s.length == 2) {
+                if (s [1] .charAt (0) == 'T') {
+                    this.len = 1;
+                    this.display = true;
+                } else {
+                    this.len = oint (s [1]);
+                    this.display = false;
+                }
+            }
+            else {
+                this.len = oint (s [1]);
+                this.display = s [2] .charAt (0) == 'T';
+            }
+        }
+        public int length () {
+            return this.len;
+        }
+        public TickMacro perform (int tick) {
+            return new TickMacro (false, false, false, false, false, false, false, false, false, 0f, 0f);
+        }
+    }
     static {
         instance = new PKCPMacroRegistry ();
         instance.register ("simple", SimpleMacro::new);
@@ -103,5 +136,6 @@ public class PKCPMacroRegistry implements Function <String, MacroCommand> {
         instance.register ("jam", (s) -> new Jam (onj, air, air, s));
         instance.register ("jam45", (s) -> new Jam (onj, sfe, sfa, s));
         instance.register ("dub45", (s) -> new Jam (dub, sfe, sfa, s));
+        instance.register ("E", E::new);
     }
 }

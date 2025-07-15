@@ -13,5 +13,13 @@
     "pkcp.msg.macro_end": "宏运行完成",
     "pkcp.mode.x": "仅X",
     "pkcp.mode.z": "仅Z",
-    "pkcp.mode.both": "X和Z同时"
+    "pkcp.mode.both": "X和Z同时",
+    "pkcp.key.runmacro": "运行宏",
+    "pkcp.cmd.yesset": "成功设置宏",
+    "pkcp.cmd.noset": "解析宏失败",
+    "pkcp.cmd.list": "存在以下宏文件：",
+    "pkcp.cmd.yesload": "成功加载宏",
+    "pkcp.cmd.noload": "加载宏失败",
+    "pkcp.cmd.yessave": "成功保存宏",
+    "pkcp.cmd.nosave": "保存宏失败"
 }

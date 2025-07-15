@@ -3,14 +3,11 @@ package bluet.pkcp.macro;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.client.player.LocalPlayer;
-
 public class Macros {
-    public final List <MacroCommand> cmds;
+    public final List <MacroEntry> cmds;
     public int exec, tick;
     public Macros (String all) {
-        this.exec = this.tick = 0;
-        List <MacroCommand> li = new ArrayList <> ();
+        List <MacroEntry> li = new ArrayList <> ();
         var c = all.split (";");
         int i;
         for (i=0; i<c.length; i++) {
@@ -19,13 +16,19 @@ public class Macros {
         }
         this.cmds = List.copyOf (li);
     }
-    public boolean exec_tick (LocalPlayer player) {
-        PlayerMacro.perform_tick (player, this.cmds.get (this.exec) .perform (this.tick));
-        this.tick ++;
-        if (this.tick == this.cmds.get (this.exec) .length ()) {
-            this.exec ++;
-            this.tick = 0;
+    public Macros (List <String> all) {
+        List <MacroEntry> li = new ArrayList <> ();
+        for (String single : all) {
+            var cmd = PKCPMacroRegistry.instance.apply (single);
+            if (cmd != null) li.add (cmd);
         }
-        return this.exec >= this.cmds.size ();
+        this.cmds = List.copyOf (li);
+    }
+    public static Macros shared = null;
+    public static boolean executing = false;
+    public static void begin () {
+        if (shared == null) return;
+        shared.exec = shared.tick = 0;
+        executing = true;
     }
 }
