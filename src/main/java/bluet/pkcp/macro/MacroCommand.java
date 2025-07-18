@@ -21,7 +21,7 @@ import java.util.List;
 
 @Mod.EventBusSubscriber (bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class MacroCommand {
-    private static String last = null;
+    public static String last = null;
     public static File cfg (String name) {
         var gd = Minecraft.getInstance () .gameDirectory;
         var md = gd.getPath () + File.separator + "macros";
@@ -83,7 +83,7 @@ public class MacroCommand {
                             last = StringArgumentType.getString (ctx, "macro");
                             Macros m = new Macros (last);
                             if (m.cmds.size () > 0) {
-                                Macros.shared = m;
+                                Macros.shared = m; Macros.cache ();
                                 msg (ctx, "pkcp.cmd.yesset", 0x00ff00);
                                 return 1;
                             } else {
@@ -118,7 +118,7 @@ public class MacroCommand {
                         last = get (StringArgumentType.getString (ctx, "name"));
                         Macros m = new Macros (last);
                         if (m.cmds.size () > 0) {
-                            Macros.shared = m;
+                            Macros.shared = m; Macros.cache ();
                             msg (ctx, "pkcp.cmd.yesload", 0x00ff00);
                             return 1;
                         } else {

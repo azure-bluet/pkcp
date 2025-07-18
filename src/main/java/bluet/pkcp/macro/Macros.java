@@ -5,7 +5,6 @@ import java.util.List;
 
 public class Macros {
     public final List <MacroEntry> cmds;
-    public int exec, tick;
     public Macros (String all) {
         List <MacroEntry> li = new ArrayList <> ();
         var c = all.split (";");
@@ -26,9 +25,17 @@ public class Macros {
     }
     public static Macros shared = null;
     public static boolean executing = false;
+    public static List <PlayerMacro.TickMacro> ticks = null;
+    public static void cache () {
+        ticks = new ArrayList <> ();
+        for (var entry : shared.cmds) {
+            int i; for (i=0; i<entry.length (); i++)
+                ticks.add (entry.perform (i));
+        }
+    }
+    public static int tick;
     public static void begin () {
         if (shared == null) return;
-        shared.exec = shared.tick = 0;
-        executing = true;
+        tick = 0; executing = true;
     }
 }

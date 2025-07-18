@@ -24,7 +24,8 @@ public class MacroItem extends Item {
             String str = com.macro ();
             Macros m = new Macros (str);
             if (m.cmds.isEmpty ()) return InteractionResultHolder.fail (stack);
-            Macros.shared = m;
+            Macros.shared = m; Macros.cache ();
+            MacroCommand.last = str;
             return InteractionResultHolder.success (stack);
         } else return InteractionResultHolder.pass (pl.getItemInHand (hand));
     }
