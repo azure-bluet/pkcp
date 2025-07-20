@@ -24,6 +24,7 @@ public class PlayerMacro {
         options.keyRight.setDown (macro.D);
         options.keyJump.setDown (macro.JUMP);
         options.keySprint.setDown (macro.SPRINT);
+        options.keyShift.setDown (macro.SNEAK);
         options.keyAttack.setDown (macro.LMB);
         options.keyUse.setDown (macro.RMB);
         rot (player, macro.dyaw, macro.dpitch);
